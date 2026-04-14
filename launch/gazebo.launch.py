@@ -15,13 +15,15 @@ def generate_launch_description():
     urdf_file = os.path.join(pkg_share, 'model', 'robot_arm_urdf.xacro')
     doc = xacro.process_file(urdf_file)
     robot_description = {'robot_description': doc.toxml()}
+    
+    param_sim_time = {"use_sim_time": True}
 
     # Robot State Publisher
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='both',
-        parameters=[robot_description, {"use_sim_time": True}]
+        parameters=[robot_description, param_sim_time]
     )
 
     # Gazebo Sim
@@ -63,8 +65,17 @@ def generate_launch_description():
         arguments=["gripper_controller"],
     )
 
+    # ROS-GZ Bridge for /clock
+    bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
+        output='screen'
+    )
+
     return LaunchDescription([
         gazebo,
+        bridge,
         robot_state_publisher,
         spawn_entity,
         joint_state_broadcaster,
