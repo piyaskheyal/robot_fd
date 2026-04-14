@@ -65,11 +65,12 @@ def generate_launch_description():
         arguments=["gripper_controller"],
     )
 
-    # ROS-GZ Bridge for /clock
+    # ROS-GZ Bridge
+    bridge_params = os.path.join(pkg_share, 'config', 'bridge_param.yaml')
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
-        arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
+        parameters=[{'config_file': bridge_params}],
         output='screen'
     )
 
