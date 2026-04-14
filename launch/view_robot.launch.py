@@ -7,9 +7,11 @@ import xacro
 
 def generate_launch_description():
     robotXacroName='robot_arm_urdf'
-    namePackage='robot_arm_description'
+    namePackage='robot_fd'
     modelFileRelativePath='model/robot_arm_urdf.xacro'
     pathModelFile=os.path.join(get_package_share_directory(namePackage),modelFileRelativePath)
+
+    param_sim_time = {"use_sim_time": False}
     
     robotDescription=xacro.process_file(pathModelFile).toxml()
     
@@ -18,7 +20,8 @@ def generate_launch_description():
         executable='robot_state_publisher',
         output='screen',
         parameters=[
-            {'robot_description': robotDescription, 'use_sim_time': True},
+            {'robot_description': robotDescription},
+            param_sim_time,
         ],
     )
 

@@ -20,7 +20,7 @@ ament_python_install_package(scripts)
 # )
 
 install(
-  DIRECTORY model launch
+  DIRECTORY model launch config
   DESTINATION share/${PROJECT_NAME}/
 )
 
