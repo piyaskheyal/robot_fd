@@ -14,10 +14,10 @@ find_package(ament_cmake_python REQUIRED)
 
 ament_python_install_package(scripts)
 
-# install(PROGRAMS
-#   scripts/fault_detection_node.py
-#   DESTINATION lib/${PROJECT_NAME}
-# )
+install(PROGRAMS
+  scripts/sine_wave_commander.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 install(
   DIRECTORY model launch config
