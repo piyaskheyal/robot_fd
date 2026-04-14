@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ros2_control tag -->
+  <ros2_control name="GazeboSimSystem" type="system">
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+
+    <!-- Arm Joints -->
+    <xacro:macro name="arm_joint" params="name">
+      <joint name="${name}">
+        <command_interface name="position">
+          <param name="min">-3.14</param>
+          <param name="max">3.14</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+    </xacro:macro>
+
+    <xacro:arm_joint name="joint_1"/>
+    <xacro:arm_joint name="joint_2"/>
+    <xacro:arm_joint name="joint_3"/>
+    <xacro:arm_joint name="joint_4"/>
+    <xacro:arm_joint name="joint_5"/>
+
+    <!-- Gripper Joints -->
+    <xacro:macro name="gripper_joint" params="name">
+      <joint name="${name}">
+        <command_interface name="position">
+          <param name="min">-0.03</param>
+          <param name="max">0.03</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+    </xacro:macro>
+
+    <xacro:gripper_joint name="joint_6"/>
+    <xacro:gripper_joint name="joint_7"/>
+  </ros2_control>
+
+  <!-- Gazebo system plugin -->
+  <gazebo>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find robot_fd)/config/controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+
+</robot>

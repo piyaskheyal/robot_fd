@@ -3,7 +3,10 @@
      Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
 <robot
-  name="robot_arm_urdf">
+  name="robot_arm_urdf" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="ros2_control.xacro" />
+  
   <link
     name="base_link">
     <inertial>
