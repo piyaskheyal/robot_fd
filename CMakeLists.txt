@@ -17,6 +17,7 @@ ament_python_install_package(scripts)
 install(PROGRAMS
   scripts/sine_wave_commander.py
   scripts/ekf_node.py
+  scripts/data_recorder.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
