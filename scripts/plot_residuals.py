@@ -16,6 +16,11 @@ def plot_residuals(csv_file):
     dt = 0.01 
     time = np.arange(len(df)) * dt
     
+    # Restrict to first 1000 seconds
+    mask = time <= 500.0
+    time = time[mask]
+    df = df[mask]
+    
     num_joints = 5
     
     # Plot 1: Position Residuals (Error in rad)
@@ -26,6 +31,7 @@ def plot_residuals(csv_file):
         ax = axes1[i-1]
         # Position residuals are named res_q1, res_q2, etc.
         ax.plot(time, df[f'res_q{i}'], label=f'Joint {i} Pos Error', color='blue', linewidth=1)
+        ax.set_ylim(-0.4, 0.4)
         ax.set_ylabel('Error (rad)')
         ax.grid(True)
         ax.legend(loc='upper right')
@@ -41,6 +47,7 @@ def plot_residuals(csv_file):
         ax = axes2[i-1]
         # Velocity residuals are named res_dq1, res_dq2, etc.
         ax.plot(time, df[f'res_dq{i}'], label=f'Joint {i} Vel Error', color='orange', linewidth=1)
+        ax.set_ylim(-0.4, 0.4)
         ax.set_ylabel('Error (rad/s)')
         ax.grid(True)
         ax.legend(loc='upper right')
