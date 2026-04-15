@@ -20,7 +20,7 @@ class SineWaveCommander(Node):
         self.start_time = time.time()
         
         # Sine wave parameters
-        self.amplitude = 1.0  # radians
+        self.amplitude = 0.2  # radians, reduced to avoid self-collisions
         self.frequency = 0.5  # Hz
         
         self.get_logger().info('Sine Wave Commander Node started, commanding all joints...')
