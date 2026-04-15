@@ -23,7 +23,7 @@ class EKFNode(Node):
         # active joints: joint_1 to joint_5.
         
         self.num_joints = 5
-        self.dt = 0.01 # 100 Hz matches controller and sensor updates
+        self.last_msg_time = None
         
         # State vector x = [q1..q5, dq1..dq5]^T
         self.x = np.zeros((self.num_joints * 2, 1))
@@ -31,23 +31,22 @@ class EKFNode(Node):
         
         # EKF Covariance Matrices
         self.P = np.eye(self.num_joints * 2) * 1.0 # Initial uncertainty
-        self.Q = np.eye(self.num_joints * 2) * 0.01 # Process noise (model uncertainty)
-        self.R = np.eye(self.num_joints * 2) * 0.1 # Measurement noise (sensor fidelity)
+        
+        # INCREASE process noise (Q) because our simplistic model doesn't perfectly match Gazebo dynamics.
+        # This prevents the EKF from strictly trusting its imperfect internal model, reducing leakage.
+        self.Q = np.eye(self.num_joints * 2) * 0.1 
+        
+        # Measurement noise (sensor fidelity) - Gazebo is currently giving us perfect data.
+        self.R = np.eye(self.num_joints * 2) * 0.01 
         
         # Simple Transition Matrix F based on position controller dynamics:
-        # q_next = q_curr + dt * dq_curr
-        # dq_next = dq_curr + dt * P_gain * (q_cmd - q_curr) - dt * D_gain * dq_curr
-        self.Kp = 50.0  # Assumed proportional gain
-        self.Kd = 10.0  # Assumed derivative gain
+        # We will update these dynamically in the callback using the real dt.
+        # Tuned Kp and Kd to better approximate Gazebo's internal implicit position tracking.
+        self.Kp = 150.0  # Increased proportional gain to match Gazebo's stiff position tracking
+        self.Kd = 20.0   # Increased derivative damping
         
         self.F = np.eye(self.num_joints * 2)
-        self.F[0:5, 5:10] = np.eye(5) * self.dt
-        self.F[5:10, 0:5] = -np.eye(5) * self.dt * self.Kp
-        self.F[5:10, 5:10] = np.eye(5) * (1.0 - self.dt * self.Kd)
-        
-        # Input Transition Matrix B (for u = q_cmd)
         self.B = np.zeros((self.num_joints * 2, self.num_joints))
-        self.B[5:10, 0:5] = np.eye(5) * self.dt * self.Kp
 
         # Measurement Matrix H (we measure both position and velocity from Gazebo)
         self.H = np.eye(self.num_joints * 2)
@@ -67,6 +66,26 @@ class EKFNode(Node):
             self.u = np.array(msg.data).reshape(self.num_joints, 1)
 
     def joint_state_cb(self, msg):
+        # Calculate dynamic loop time (dt) instead of hardcoding 0.01
+        current_time = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
+        if self.last_msg_time is None:
+            self.last_msg_time = current_time
+            return
+            
+        dt = current_time - self.last_msg_time
+        self.last_msg_time = current_time
+        
+        # Prevent huge jumps if Gazebo starts/stops
+        if dt <= 0.0 or dt > 0.1:
+            return
+
+        # Update F and B dynamically using the calculated true dt
+        self.F[0:5, 5:10] = np.eye(5) * dt
+        self.F[5:10, 0:5] = -np.eye(5) * dt * self.Kp
+        self.F[5:10, 5:10] = np.eye(5) * (1.0 - dt * self.Kd)
+
+        self.B[5:10, 0:5] = np.eye(5) * dt * self.Kp
+
         # Filter for our active joints
         target_joints = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5']
         
