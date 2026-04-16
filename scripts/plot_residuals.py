@@ -40,20 +40,22 @@ def plot_residuals(csv_file):
     plt.tight_layout()
     
     # Plot 2: Velocity Residuals (Error in rad/s)
-    fig2, axes2 = plt.subplots(num_joints, 1, figsize=(10, 12), sharex=True)
-    fig2.suptitle('Healthy EKF Velocity Residuals', fontsize=16)
+    # Velocity residuals are currently commented out as this is not necessary for the moment.
     
-    for i in range(1, num_joints + 1):
-        ax = axes2[i-1]
-        # Velocity residuals are named res_dq1, res_dq2, etc.
-        ax.plot(time, df[f'res_dq{i}'], label=f'Joint {i} Vel Error', color='orange', linewidth=1)
-        ax.set_ylim(-0.7, 0.7)
-        ax.set_ylabel('Error (rad/s)')
-        ax.grid(True)
-        ax.legend(loc='upper right')
+    # fig2, axes2 = plt.subplots(num_joints, 1, figsize=(10, 12), sharex=True)
+    # fig2.suptitle('Healthy EKF Velocity Residuals', fontsize=16)
+    
+    # for i in range(1, num_joints + 1):
+    #     ax = axes2[i-1]
+    #     # Velocity residuals are named res_dq1, res_dq2, etc.
+    #     ax.plot(time, df[f'res_dq{i}'], label=f'Joint {i} Vel Error', color='orange', linewidth=1)
+    #     ax.set_ylim(-0.7, 0.7)
+    #     ax.set_ylabel('Error (rad/s)')
+    #     ax.grid(True)
+    #     ax.legend(loc='upper right')
         
-    axes2[-1].set_xlabel('Time (s)')
-    plt.tight_layout()
+    # axes2[-1].set_xlabel('Time (s)')
+    # plt.tight_layout()
     
     print("Displaying plots. Close the plot windows to exit.")
     plt.show()
