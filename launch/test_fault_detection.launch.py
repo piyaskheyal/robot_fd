@@ -18,7 +18,6 @@ def generate_launch_description():
     # Extracted from fault injector defaults
     fault_joint_name = LaunchConfiguration('fault_joint_name', default='joint_2')
     fault_magnitude = LaunchConfiguration('fault_magnitude', default='0.1')
-    fault_start_time = LaunchConfiguration('fault_start_time', default='10.0')
 
     # Declare Launch Arguments
     declare_use_sim_time = DeclareLaunchArgument('use_sim_time', default_value='true')
@@ -27,7 +26,6 @@ def generate_launch_description():
     
     declare_fault_joint_name = DeclareLaunchArgument('fault_joint_name', default_value='joint_2')
     declare_fault_magnitude = DeclareLaunchArgument('fault_magnitude', default_value='0.1')
-    declare_fault_start_time = DeclareLaunchArgument('fault_start_time', default_value='10.0')
 
     # Include Gazebo Simulation Launch File
     gazebo_launch = IncludeLaunchDescription(
@@ -59,8 +57,7 @@ def generate_launch_description():
         parameters=[{
             'use_sim_time': param_sim_time,
             'fault_joint_name': fault_joint_name,
-            'fault_magnitude': fault_magnitude,
-            'fault_start_time': fault_start_time
+            'fault_magnitude': fault_magnitude
         }]
     )
 
@@ -97,7 +94,6 @@ def generate_launch_description():
         declare_noise_std_dev,
         declare_fault_joint_name,
         declare_fault_magnitude,
-        declare_fault_start_time,
         
         gazebo_launch,
         sine_wave_commander_node,

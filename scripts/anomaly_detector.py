@@ -123,11 +123,9 @@ class AnomalyDetectorNode(Node):
             anomaly_msg.data = bool(is_anomaly)
             self.anomaly_pub.publish(anomaly_msg)
             
-            # Log warnings at 1 Hz max if an anomaly is detected, or 5 Hz if tracking nominal
+            # Log warnings if an anomaly is detected
             if is_anomaly:
                 self.get_logger().warn(f"ANOMALY DETECTED! MSE: {mse_loss:.5f} > THRESH: {self.threshold:.5f}", throttle_duration_sec=0.5)
-            else:
-                self.get_logger().info(f"System Nominal. MSE: {mse_loss:.5f}", throttle_duration_sec=2.0)
 
 def main(args=None):
     rclpy.init(args=args)

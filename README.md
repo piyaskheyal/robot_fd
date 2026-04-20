@@ -62,11 +62,16 @@ python3 src/robot_fd/scripts/train_autoencoder.py
 ```
 
 ### 4. Run the Live Fault Detection Pipeline
-Test everything. Use the integrated orchestrator to launch Gazebo, generate commands (at the exact same noise profile), inject an artificial 0.1 radian fault onto `joint_2` automatically after 10s, process the EKF, and run the online PyTorch detector.
+Test everything. Use the integrated orchestrator to launch Gazebo, generate commands (at the exact same noise profile), route signals through the fault injector, process the EKF, and run the online PyTorch detector.
 ```bash
 ros2 launch robot_fd test_fault_detection.launch.py fault_magnitude:=0.1
 ```
-Monitor the terminal output; after 10s, it will shout `ANOMALY DETECTED!` when the structural MSE breaches the trained nominal threshold.
+The terminal will remain quiet (except for nominal ROS logs). 
+When you are ready to simulate the sudden sensor fault, open a new terminal and run:
+```bash
+ros2 topic pub -1 /inject_fault std_msgs/msg/Empty
+```
+Watch the orchestrator terminal. It will immediately print `INJECTING FAULT NOW!` closely followed by continuous `ANOMALY DETECTED!` warnings as the detector registers the structural MSE breach.
 
 ## Current Completion Status
 * **Phase 1 to Phase 5:** Completed. The 1D-CNN autoencoder successfully classifies healthy vs degraded EKF residual windows dynamically based on a custom `percentile` threshold.
