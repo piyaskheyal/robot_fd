@@ -127,18 +127,14 @@ def main(args=None):
             for ax in [ax1, ax2]:
                 ax.set_xlim(x_min, max(10.0, x_max))
                 
-            # Dynamic Y-Axis (Tighter zoom to show anomalies perfectly)
+            # Dynamic Y-Axis for the input wave
             if len(node.true_pos) > 0 and len(node.faulty_pos) > 0:
                 y_min1 = min(min(node.true_pos), min(node.faulty_pos))
                 y_max1 = max(max(node.true_pos), max(node.faulty_pos))
-                # Tighter padding on top graph so the split is obvious
-                ax1.set_ylim(y_min1 - 0.02, y_max1 + 0.02)
-                
-            if len(node.res_pos) > 0:
-                res_max = max(abs(min(node.res_pos)), abs(max(node.res_pos)))
-                # Multiplicative padding instead of huge absolute padding
-                # This ensures the residual spike fills the screen vertically!
-                ax2.set_ylim(-res_max * 1.1 - 0.005, res_max * 1.1 + 0.005)
+                ax1.set_ylim(y_min1 - 0.05, y_max1 + 0.05)
+            
+            # The residual is typically around 0.0, but faults can spike it
+            ax2.set_ylim(-0.05, 0.05)
             
         return line_true, line_faulty, line_res
 
