@@ -66,7 +66,7 @@ class AnomalyDetectorNode(Node):
         
         # Load artifacts
         self.get_logger().info(f"Loading anomaly detector weights from {model_dir} to {self.device}...")
-        checkpoint = torch.load(self.model_path, map_location=self.device)
+        checkpoint = torch.load(self.model_path, map_location=self.device, weights_only=False)
         self.threshold = checkpoint['threshold']
         self.window_size = checkpoint['seq_len']
         self.in_channels = checkpoint['in_channels']
