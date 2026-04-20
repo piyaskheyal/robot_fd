@@ -20,6 +20,7 @@ install(PROGRAMS
   scripts/data_recorder.py
   scripts/fault_injector.py
   scripts/anomaly_detector.py
+  scripts/live_plotter.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
