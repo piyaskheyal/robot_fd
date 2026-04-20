@@ -27,8 +27,8 @@ class DataRecorderNode(Node):
         self.csv_writer.writerow(header)
         
         self.sample_count = 0
-        # Optional: stop after acquiring sufficient samples. E.g., 6500 from the paper.
-        self.max_samples = 6500
+        # Optional: stop after acquiring sufficient samples. E.g., 65000 from the paper.
+        self.max_samples = 65000
         
         self.get_logger().info(f"Recording residuals to {self.file_name}...")
 
