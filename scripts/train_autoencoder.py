@@ -135,9 +135,9 @@ def train():
     print(f"Learned 99.5th Percentile Threshold: {threshold:.6f}")
     
     # Save the model, scaler, and threshold
-    os.makedirs('src/robot_fd/model', exist_ok=True)
-    model_path = 'src/robot_fd/model/autoencoder_1d_cnn.pth'
-    scaler_path = 'src/robot_fd/model/scaler.pkl'
+    os.makedirs('src/robot_fd/weights', exist_ok=True)
+    model_path = 'src/robot_fd/weights/autoencoder_1d_cnn.pth'
+    scaler_path = 'src/robot_fd/weights/scaler.pkl'
     
     torch.save({
         'model_state_dict': model.state_dict(),
@@ -159,8 +159,8 @@ def train():
     plt.ylabel('Frequency')
     plt.legend()
     plt.grid(True)
-    plt.savefig('src/robot_fd/model/healthy_loss_histogram.png')
-    print("Saved training loss distribution histogram to 'src/robot_fd/model/healthy_loss_histogram.png'.")
+    plt.savefig('src/robot_fd/weights/healthy_loss_histogram.png')
+    print("Saved training loss distribution histogram to 'src/robot_fd/weights/healthy_loss_histogram.png'.")
 
 if __name__ == '__main__':
     train()
