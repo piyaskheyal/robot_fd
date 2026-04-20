@@ -21,7 +21,8 @@ class SineWaveCommander(Node):
         self.start_time = time.time()
         
         # Sine wave parameters
-        self.amplitude = 0.2  # radians, reduced to avoid self-collisions
+        self.amplitude = 0.20  # radians
+        self.offset = 0.5     # radians, to prevent hitting the 0.0 lower limit
         self.frequency = 0.5  # Hz
         
         # Noise parameters
@@ -46,7 +47,7 @@ class SineWaveCommander(Node):
         # for each joint so the arm moves in a fluid workspace.
         val = []
         for i in range(5):
-            base_val = self.amplitude * math.sin(2.0 * math.pi * self.frequency * current_time + (i * 0.5))
+            base_val = self.offset + self.amplitude * math.sin(2.0 * math.pi * self.frequency * current_time + (i * 0.5))
             if enable_noise:
                 base_val += random.gauss(0.0, noise_std_dev)
             val.append(base_val)

@@ -31,7 +31,7 @@ def plot_residuals(csv_file):
         ax = axes1[i-1]
         # Position residuals are named res_q1, res_q2, etc.
         ax.plot(time, df[f'res_q{i}'], label=f'Joint {i} Pos Error', color='blue', linewidth=1)
-        ax.set_ylim(-0.02, 0.02)
+        ax.set_ylim(-0.05, 0.05)
         ax.set_ylabel('Error (rad)')
         ax.grid(True)
         ax.legend(loc='upper right')
