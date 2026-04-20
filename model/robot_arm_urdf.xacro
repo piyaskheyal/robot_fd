@@ -7,6 +7,14 @@
 
   <xacro:include filename="ros2_control.xacro" />
   
+  <link name="world" />
+  
+  <joint name="fixed_base_joint" type="fixed">
+    <parent link="world" />
+    <child link="base_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
   <link
     name="base_link">
     <inertial>
