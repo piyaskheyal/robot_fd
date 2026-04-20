@@ -19,6 +19,7 @@ install(PROGRAMS
   scripts/ekf_node.py
   scripts/data_recorder.py
   scripts/fault_injector.py
+  scripts/anomaly_detector.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
