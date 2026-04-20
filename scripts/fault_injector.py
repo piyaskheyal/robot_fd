@@ -16,45 +16,49 @@ class FaultInjectorNode(Node):
         self.fault_joint = self.get_parameter('fault_joint_name').value
         self.fault_magnitude = self.get_parameter('fault_magnitude').value
 
+        # Dictionary to track multiple active injected faults: {joint_name: magnitude_offset}
+        self.active_faults = {}
+
         # Subscribers and Publishers
         self.create_subscription(JointState, '/joint_states', self.joint_states_cb, 10)
-        self.create_subscription(Empty, '/inject_fault', self.trigger_cb, 10)
+        self.create_subscription(JointState, '/inject_fault', self.trigger_cb, 10)
         
         self.faulty_pub = self.create_publisher(JointState, '/faulty_joint_states', 10)
-        
-        self.fault_active = False
 
-        self.get_logger().info(f"Fault Injector initialized. Target: {self.fault_joint}, Magnitude: {self.fault_magnitude} rad")
-        self.get_logger().warn("Waiting for trigger! Run: ros2 topic pub -1 /inject_fault std_msgs/msg/Empty")
+        self.get_logger().info(f"Fault Injector dynamically waiting for JointState commands on /inject_fault...")
 
     def trigger_cb(self, msg):
-        if not self.fault_active:
-            self.fault_active = True
-            self.get_logger().error(f"INJECTING FAULT NOW! Added {self.fault_magnitude} rad to {self.fault_joint} position.")
+        # A trigger has arrived containing a joint array and position array
+        # Loop through elements and add/update them in our active faults dict
+        for i, joint_name in enumerate(msg.name):
+            if i < len(msg.position):
+                magnitude = msg.position[i]
+                if magnitude != 0.0:
+                    self.active_faults[joint_name] = magnitude
+                    self.get_logger().error(f"FAULT INSTRUCTED! Applying {magnitude} rad override to {joint_name}.")
+                else: 
+                    # Providing 0.0 clears/heals the fault
+                    if joint_name in self.active_faults:
+                        del self.active_faults[joint_name]
+                        self.get_logger().info(f"CLEARED fault on {joint_name}.")
 
     def joint_states_cb(self, msg):
         # Create a deep copy of the message so we don't mutate the original if it's referenced elsewhere
         faulty_msg = copy.deepcopy(msg)
 
-        # Check if it's time to inject the fault
-        if self.fault_active:
-            try:
-                # Find the index of the target joint
-                idx = faulty_msg.name.index(self.fault_joint)
-                
-                # Convert tuple (which ros2 python often uses for message arrays) to list to mutate it
-                positions = list(faulty_msg.position)
-                
-                # Inject the sensor bias (simulate a skipped encoder or miscalibration)
-                positions[idx] += self.fault_magnitude
-                
-                # Assign it back
-                faulty_msg.position = tuple(positions)
-                
-            except ValueError:
-                pass # The target joint isn't in this particular JointState message array
+        # Convert position tuple to list explicitly so we can mutate it
+        positions = list(faulty_msg.position)
 
-        # Always publish the message (it is clean before fault_start_time, and faulty after)
+        # Inject any active tracking sensory biases
+        for faulted_joint, magnitude in self.active_faults.items():
+            if faulted_joint in faulty_msg.name:
+                idx = faulty_msg.name.index(faulted_joint)
+                positions[idx] += magnitude
+
+        # Re-pack back into tuple
+        faulty_msg.position = tuple(positions)
+
+        # Always publish the message
         self.faulty_pub.publish(faulty_msg)
 
 

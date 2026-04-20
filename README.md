@@ -67,11 +67,16 @@ Test everything. Use the integrated orchestrator to launch Gazebo, generate comm
 ros2 launch robot_fd test_fault_detection.launch.py fault_magnitude:=0.1
 ```
 The terminal will remain quiet (except for nominal ROS logs). 
-When you are ready to simulate the sudden sensor fault, open a new terminal and run:
+When you are ready to simulate the sudden sensor fault on a specific joint, open a new terminal and run:
 ```bash
-ros2 topic pub -1 /inject_fault std_msgs/msg/Empty
+ros2 topic pub -1 /inject_fault sensor_msgs/msg/JointState "{name: ['joint_4'], position: [0.15]}"
 ```
-Watch the orchestrator terminal. It will immediately print `INJECTING FAULT NOW!` closely followed by continuous `ANOMALY DETECTED!` warnings as the detector registers the structural MSE breach.
+The node will interpret that as: Add a persistent 0.15 rad offset to joint_4. 
+If you want to inject fault on another joint simply run the command again with that joint name. 
+If you want to clear the fault simply pass magnitude as zero: 
+`ros2 topic pub -1 /inject_fault sensor_msgs/msg/JointState "{name: ['joint_4'], position: [0.0]}"`
+
+Watch the orchestrator terminal. It will immediately print `FAULT INSTRUCTED! Applying <x> override to <y> joint.` closely followed by continuous `ANOMALY DETECTED!` warnings.
 
 ## Current Completion Status
 * **Phase 1 to Phase 5:** Completed. The 1D-CNN autoencoder successfully classifies healthy vs degraded EKF residual windows dynamically based on a custom `percentile` threshold.
