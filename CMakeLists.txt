@@ -18,6 +18,7 @@ install(PROGRAMS
   scripts/sine_wave_commander.py
   scripts/ekf_node.py
   scripts/data_recorder.py
+  scripts/fault_injector.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
