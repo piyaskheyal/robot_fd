@@ -1,0 +1,166 @@
+#!/home/kheyal/ws_ros2/ws_robot_arm_fault_detection/.venv/bin/python
+import os
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
+import matplotlib.pyplot as plt
+import joblib
+from sklearn.preprocessing import StandardScaler
+
+# --- HYPERPARAMETERS ---
+WINDOW_SIZE = 50  # 50ms at 1000Hz
+BATCH_SIZE = 256
+EPOCHS = 30
+LEARNING_RATE = 1e-3
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# --- MODEL DEFINITION ---
+class Conv1DAutoencoder(nn.Module):
+    def __init__(self, in_channels, seq_len):
+        super(Conv1DAutoencoder, self).__init__()
+        
+        # Encoder
+        self.encoder = nn.Sequential(
+            nn.Conv1d(in_channels=in_channels, out_channels=32, kernel_size=3, padding=1, stride=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2), # seq_len = 25
+            
+            nn.Conv1d(in_channels=32, out_channels=16, kernel_size=3, padding=1, stride=1),
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=5)  # seq_len = 5
+        )
+        
+        # Decoder
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose1d(in_channels=16, out_channels=32, kernel_size=5, stride=5), # seq_len = 25
+            nn.ReLU(),
+            
+            nn.ConvTranspose1d(in_channels=32, out_channels=32, kernel_size=2, stride=2), # seq_len = 50
+            nn.ReLU(),
+            
+            nn.Conv1d(in_channels=32, out_channels=in_channels, kernel_size=3, padding=1, stride=1) # seq_len = 50
+        )
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
+
+
+def create_sequences(data, seq_length):
+    xs = []
+    for i in range(len(data) - seq_length + 1):
+        xs.append(data[i:(i + seq_length)])
+    return np.array(xs)
+
+def train():
+    print(f"Using device: {DEVICE}")
+    print("Loading healthy baseline data...")
+    # Load your CSV data (relative to workspace root if executed from there)
+    data_path = 'healthy_residuals.csv'
+    if not os.path.exists(data_path):
+        print(f"Error: Could not find {data_path}. Ensure you are running from the workspace root.")
+        return
+        
+    df = pd.read_csv(data_path)
+    
+    # We expect 10 columns: res_q1..q5, res_dq1..dq5
+    feature_cols = df.columns
+    in_channels = len(feature_cols)
+    
+    # Preprocess
+    print("Scaling data...")
+    scaler = StandardScaler()
+    scaled_data = scaler.fit_transform(df.values)
+    
+    # Create windows
+    print(f"Creating sliding windows of size {WINDOW_SIZE}...")
+    X = create_sequences(scaled_data, WINDOW_SIZE)
+    
+    # PyTorch wants input as (Batch, Channels, Seq_Len)
+    # create_sequences gives (Batch, Seq_Len, Channels)
+    X = np.transpose(X, (0, 2, 1))
+    
+    # Create DataLoader
+    tensor_X = torch.tensor(X, dtype=torch.float32)
+    dataset = TensorDataset(tensor_X)
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+    
+    # Initialize Model, Loss, Optimizer
+    model = Conv1DAutoencoder(in_channels=in_channels, seq_len=WINDOW_SIZE).to(DEVICE)
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    
+    # Training Loop
+    print(f"Starting Training for {EPOCHS} epochs...")
+    model.train()
+    for epoch in range(1, EPOCHS + 1):
+        epoch_loss = 0
+        for batch in dataloader:
+            x_batch = batch[0].to(DEVICE)
+            
+            # Forward pass
+            reconstruction = model(x_batch)
+            loss = criterion(reconstruction, x_batch)
+            
+            # Backward pass
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            
+            epoch_loss += loss.item()
+            
+        print(f"Epoch [{epoch}/{EPOCHS}] - Loss: {epoch_loss / len(dataloader):.6f}")
+
+    # Evaluate dynamic threshold based on training data reconstruction errors
+    print("Calculating nominal anomaly threshold...")
+    model.eval()
+    losses = []
+    with torch.no_grad():
+        # Do not shuffle to correspond easily to original sequences if needed (though not required for threshold stats)
+        eval_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
+        for batch in eval_loader:
+            x_batch = batch[0].to(DEVICE)
+            reconstruction = model(x_batch)
+            # Calculate MSE per sequence in the batch
+            # Shape is (Batch, Channels, Seq_Len). We want the mean over Channels and Seq_Len.
+            loss = torch.mean((reconstruction - x_batch)**2, dim=[1, 2])
+            losses.extend(loss.cpu().numpy())
+            
+    losses = np.array(losses)
+    # e.g., Set threshold at the 99th percentile of healthy reconstruction losses + a safety margin
+    threshold = np.percentile(losses, 99.5)
+    print(f"Learned 99.5th Percentile Threshold: {threshold:.6f}")
+    
+    # Save the model, scaler, and threshold
+    os.makedirs('src/robot_fd/model', exist_ok=True)
+    model_path = 'src/robot_fd/model/autoencoder_1d_cnn.pth'
+    scaler_path = 'src/robot_fd/model/scaler.pkl'
+    
+    torch.save({
+        'model_state_dict': model.state_dict(),
+        'threshold': threshold,
+        'in_channels': in_channels,
+        'seq_len': WINDOW_SIZE
+    }, model_path)
+    joblib.dump(scaler, scaler_path)
+    
+    print(f"Model saved to {model_path}")
+    print(f"Scaler saved to {scaler_path}")
+    
+    # Generate visualization of the loss distribution
+    plt.figure(figsize=(10, 5))
+    plt.hist(losses, bins=100, alpha=0.75, color='blue', edgecolor='black')
+    plt.axvline(threshold, color='red', linestyle='dashed', linewidth=2, label=f'Threshold (99.5%): {threshold:.5f}')
+    plt.title('Reconstruction Loss Distribution on Healthy Data')
+    plt.xlabel('MSE Loss')
+    plt.ylabel('Frequency')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig('src/robot_fd/model/healthy_loss_histogram.png')
+    print("Saved training loss distribution histogram to 'src/robot_fd/model/healthy_loss_histogram.png'.")
+
+if __name__ == '__main__':
+    train()

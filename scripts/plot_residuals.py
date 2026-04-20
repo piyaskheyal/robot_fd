@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/kheyal/ws_ros2/ws_robot_arm_fault_detection/.venv/bin/python
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
