@@ -33,8 +33,8 @@ class LivePlotter(Node):
         self.start_time = None
         self.last_plot_time = 0
 
-        # For indexing residuals, we assume joint order from ekf_node: joint_1..5
-        self.joint_names = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5']
+        # For indexing residuals, we assume joint order from ekf_node: joint_1..6
+        self.joint_names = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6']
         try:
             self.res_index = self.joint_names.index(self.target_joint)
         except ValueError:
@@ -68,8 +68,8 @@ class LivePlotter(Node):
             pass
 
     def residual_cb(self, msg):
-        if len(msg.data) >= 5:
-            # First 5 dimensions are positions
+        if len(msg.data) >= 6:
+            # First 6 dimensions are positions
             self.latest_res = msg.data[self.res_index]
 
     def _update_data(self):

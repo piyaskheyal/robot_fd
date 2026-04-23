@@ -31,7 +31,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')
         ),
-        launch_arguments={'gz_args': '-r empty.sdf'}.items()
+        launch_arguments={'gz_args': '-r empty.sdf --physics-engine gz-physics-bullet-featherstone-plugin'}.items()
     )
 
     # Spawn Robot
@@ -58,13 +58,6 @@ def generate_launch_description():
         arguments=["arm_controller"],
     )
 
-    # Gripper Controller
-    gripper_controller = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["gripper_controller"],
-    )
-
     # ROS-GZ Bridge
     bridge_params = os.path.join(pkg_share, 'config', 'bridge_param.yaml')
     bridge = Node(
@@ -81,5 +74,4 @@ def generate_launch_description():
         spawn_entity,
         joint_state_broadcaster,
         arm_controller,
-        gripper_controller,
     ])

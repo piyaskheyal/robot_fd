@@ -20,9 +20,9 @@ class EKFNode(Node):
         # Note: If xacro needs processing, we might want to subscribe to /robot_description instead,
         # but for simple kinematics, many users just load the plain URDF if it's parsable by Pinocchio.
         # Alternatively, we just use a generic N-DOF kinematic matrix since we only care about the
-        # active joints: joint_1 to joint_5.
+        # active joints: joint_1 to joint_6.
         
-        self.num_joints = 5
+        self.num_joints = 6
         self.last_msg_time = None
         
         # State vector x = [q1..q5, dq1..dq5]^T
@@ -61,7 +61,7 @@ class EKFNode(Node):
         self.last_time = self.get_clock().now()
 
     def command_cb(self, msg):
-        # We assume the command matches the 5 joints implicitly
+        # We assume the command matches the 6 joints implicitly
         if len(msg.data) == self.num_joints:
             self.u = np.array(msg.data).reshape(self.num_joints, 1)
 
@@ -80,14 +80,14 @@ class EKFNode(Node):
             return
 
         # Update F and B dynamically using the calculated true dt
-        self.F[0:5, 5:10] = np.eye(5) * dt
-        self.F[5:10, 0:5] = -np.eye(5) * dt * self.Kp
-        self.F[5:10, 5:10] = np.eye(5) * (1.0 - dt * self.Kd)
+        self.F[0:6, 6:12] = np.eye(6) * dt
+        self.F[6:12, 0:6] = -np.eye(6) * dt * self.Kp
+        self.F[6:12, 6:12] = np.eye(6) * (1.0 - dt * self.Kd)
 
-        self.B[5:10, 0:5] = np.eye(5) * dt * self.Kp
+        self.B[6:12, 0:6] = np.eye(6) * dt * self.Kp
 
         # Filter for our active joints
-        target_joints = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5']
+        target_joints = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6']
         
         try:
             indices = [msg.name.index(act_j) for act_j in target_joints]
@@ -95,8 +95,8 @@ class EKFNode(Node):
             # We don't have all required joints in this message yet
             return
             
-        z_q = np.array([msg.position[i] for i in indices]).reshape(5, 1)
-        z_dq = np.array([msg.velocity[i] for i in indices]).reshape(5, 1)
+        z_q = np.array([msg.position[i] for i in indices]).reshape(6, 1)
+        z_dq = np.array([msg.velocity[i] for i in indices]).reshape(6, 1)
         z = np.vstack((z_q, z_dq))
         
         # 1. Predict
@@ -121,7 +121,7 @@ class EKFNode(Node):
         self.residual_pub.publish(res_msg)
         
         # Optionally log the norm of the position residual for monitoring
-        pos_residual_norm = np.linalg.norm(y[0:5])
+        pos_residual_norm = np.linalg.norm(y[0:6])
         # self.get_logger().info(f"Position Residual Norm: {pos_residual_norm:.5f}", throttle_duration_sec=1.0)
 
 

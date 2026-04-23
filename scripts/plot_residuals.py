@@ -21,7 +21,7 @@ def plot_residuals(csv_file):
     time = time[mask]
     df = df[mask]
     
-    num_joints = 5
+    num_joints = 6
     
     # Plot 1: Position Residuals (Error in rad)
     fig1, axes1 = plt.subplots(num_joints, 1, figsize=(10, 12), sharex=True)

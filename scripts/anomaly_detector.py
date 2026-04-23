@@ -87,7 +87,7 @@ class AnomalyDetectorNode(Node):
         self.get_logger().info(f"Anomaly Detector initialized. Sliding Window: {self.window_size}, Threshold: {self.threshold:.5f}")
 
     def residual_cb(self, msg):
-        # We expect data to be [res_q1..q5, res_dq1..dq5] (10 dims)
+        # We expect data to be [res_q1..q6, res_dq1..dq6] (12 dims)
         if len(msg.data) != self.in_channels:
             self.get_logger().warn(f"Expected {self.in_channels} residual features, got {len(msg.data)}")
             return

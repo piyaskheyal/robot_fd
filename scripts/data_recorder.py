@@ -22,8 +22,8 @@ class DataRecorderNode(Node):
         self.file = open(self.file_name, mode='w', newline='')
         self.csv_writer = csv.writer(self.file)
         
-        # Write header: [res_q1...res_q5, res_dq1...res_dq5]
-        header = [f'res_q{i}' for i in range(1, 6)] + [f'res_dq{i}' for i in range(1, 6)]
+        # Write header: [res_q1...res_q6, res_dq1...res_dq6]
+        header = [f'res_q{i}' for i in range(1, 7)] + [f'res_dq{i}' for i in range(1, 7)]
         self.csv_writer.writerow(header)
         
         self.sample_count = 0

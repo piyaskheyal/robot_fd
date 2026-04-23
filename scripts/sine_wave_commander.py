@@ -41,13 +41,19 @@ class SineWaveCommander(Node):
         enable_noise = self.get_parameter('enable_noise').get_parameter_value().bool_value
         noise_std_dev = self.get_parameter('noise_std_dev').get_parameter_value().double_value
         
-        # The arm_controller expects 5 values, one for each joint respectively 
-        # (joint_1, joint_2, joint_3, joint_4, joint_5)
+        # The arm_controller expects 6 values, one for each joint respectively 
+        # (joint_1, joint_2, joint_3, joint_4, joint_5, joint_6)
         # Apply a sine wave to all joints. We use a slight phase shift (i * 0.5) 
         # for each joint so the arm moves in a fluid workspace.
         val = []
-        for i in range(5):
-            base_val = self.offset + self.amplitude * math.sin(2.0 * math.pi * self.frequency * current_time + (i * 0.5))
+        for i in range(6):
+            if i < 5:
+                base_val = self.offset + self.amplitude * math.sin(2.0 * math.pi * self.frequency * current_time + (i * 0.5))
+            else:
+                # Gripper joint_6 limits are [0, 0.03]
+                gripper_amp = 0.015
+                gripper_offset = 0.015
+                base_val = gripper_offset + gripper_amp * math.sin(2.0 * math.pi * self.frequency * current_time + (i * 0.5))
             if enable_noise:
                 base_val += random.gauss(0.0, noise_std_dev)
             val.append(base_val)
